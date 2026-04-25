@@ -10,7 +10,6 @@ This repository contains a parameterizable SystemVerilog implementation of a Car
 - **`tb_CLA.sv`**: A randomized testbench that validates the adder against a behavioral model.
   - Executes 1,000 iterations of random 32-bit additions.
   - Uses a `$fatal` check to ensure the computed sum matches the expected hardware model.
-- **`.gitignore`**: Configured to ignore compiled binary outputs (e.g., `a.out`).
 
 ## Logic Overview
 
