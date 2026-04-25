@@ -1,26 +1,38 @@
-# Carry Lookahead Adder (CLA)
+# Carry Lookahead Adder (CLA) Implementation
 
-This repository contains a parameterizable SystemVerilog implementation of a Carry Lookahead Adder and its corresponding testbench.
+This project provides a hierarchical implementation of a 32-bit Carry Lookahead Adder (CLA) in SystemVerilog. The design is built using modular 4-bit and 16-bit CLA blocks to optimize carry propagation speed.
 
 ## Project Structure
 
-- **`CLA.sv`**: The primary hardware module. It features a configurable `WIDTH` (default 32) and implements the CLA logic using generate/propagate signals to compute sums and carries.
-  - **Inputs**: `A`, `B` (operands), `Cin` (carry-in).
-  - **Outputs**: `sum`, `Cout` (carry-out), and `V` (overflow flag).
-- **`tb_CLA.sv`**: A randomized testbench that validates the adder against a behavioral model.
-  - Executes 1,000 iterations of random 32-bit additions.
-  - Uses a `$fatal` check to ensure the computed sum matches the expected hardware model.
+- **`CLA.sv`**: Contains the hardware logic for the adder modules:
+  - **`CLA`**: A parameterizable 4-bit base module that calculates Generate ($G$) and Propagate ($P$) signals to derive carries.
+  - **`CLA16`**: A 16-bit adder composed of four 4-bit `CLA` blocks.
+  - **`CLA32`**: A 32-bit adder composed of two 16-bit `CLA16` blocks.
+- **`tb_CLA.sv`**: A comprehensive testbench that validates the 32-bit adder using randomized stimulus and a behavioral model.
 
-## Logic Overview
+## Hardware Logic Overview
 
-The design calculates the Carry ($C$) based on Generate ($G$) and Propagate ($P$) logic:
+The CLA logic minimizes the delay caused by carry rippling by calculating all carry bits in parallel based on the input operands.
 
-- $G_i = A_i \cdot B_i$
-- $P_i = A_i \oplus B_i$
-- $C_{i+1} = G_i + (P_i \cdot C_i)$
+- **Generate ($G$):** $G_i = A_i \cdot B_i$ (Carry is generated at bit $i$).
+- **Propagate ($P$):** $P_i = A_i \oplus B_i$ (Carry is propagated through bit $i$).
+- **Carry ($C$):** Calculated using the formula $C_{i+1} = G_i + (P_i \cdot C_i)$.
+- **Group Signals:** The modules also output Group Propagate (`Pg`) and Group Generate (`Gg`) to facilitate higher-level hierarchical connections.
+
+## Verification
+
+The testbench (`tb_CLA.sv`) performs the following verification steps:
+
+1.  **Directed Tests**: Validates specific edge cases such as all-zeros, all-ones, and carry-in transitions.
+2.  **Randomized Testing**: Executes 1,000 iterations of random 32-bit additions using `$urandom`.
+3.  **Self-Checking**: Compares the hardware output (`actual`) against a golden behavioral model (`expected`).
+4.  **Error Handling**: If a mismatch occurs, the simulation terminates with a `$fatal` message detailing the failing inputs and results.
 
 ## How to Run
 
-1.  **Simulation**: I used Icarus Verilog
-2.  **Execution**: Run the testbench file (`tb_CLA.sv`) along with the design file (`CLA.sv`).
-3.  **Verification**: The simulation will display "PASS" for each successful addition and "ALL TESTS COMPLETED!" upon successful conclusion. In case of failure it will exit saying "FAIL" and give a b cin expected and sum
+1.  **Requirements**: Use a SystemVerilog simulator (e.g., Icarus Verilog, Vivado, or VCS). I used Icarus Verilog
+2.  **Simulation**: Compile both files and run the testbench:
+    ```
+    iverilog -g2012 CLA.sv tb_CLA.sv
+    vvp a.out
+    ```
